@@ -13,15 +13,15 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:test/test.dart';
 
 class RepositoryMock implements PackageRepository {
-  final ZoneBinaryCallback<Stream<List<int>>, String, String> downloadFun;
-  final ZoneBinaryCallback<Uri, String, String> downloadUrlFun;
-  final ZoneUnaryCallback<PackageVersion, Uri> finishAsyncUploadFun;
-  final ZoneBinaryCallback<PackageVersion, String, String> lookupVersionFun;
-  final ZoneUnaryCallback<Future<AsyncUploadInfo>, Uri> startAsyncUploadFun;
-  final ZoneUnaryCallback<Future<PackageVersion>, Stream<List<int>>> uploadFun;
-  final ZoneUnaryCallback<Stream<PackageVersion>, String> versionsFun;
-  final ZoneBinaryCallback<Future, String, String> addUploaderFun;
-  final ZoneBinaryCallback<Future, String, String> removeUploaderFun;
+  final ZoneBinaryCallback<Stream<List<int>>, String, String>? downloadFun;
+  final ZoneBinaryCallback<Uri, String, String>? downloadUrlFun;
+  final ZoneUnaryCallback<PackageVersion, Uri>? finishAsyncUploadFun;
+  final ZoneBinaryCallback<PackageVersion?, String, String>? lookupVersionFun;
+  final ZoneUnaryCallback<Future<AsyncUploadInfo>, Uri>? startAsyncUploadFun;
+  final ZoneUnaryCallback<Future<PackageVersion>, Stream<List<int>>>? uploadFun;
+  final ZoneUnaryCallback<Stream<PackageVersion>, String>? versionsFun;
+  final ZoneBinaryCallback<Future?, String, String>? addUploaderFun;
+  final ZoneBinaryCallback<Future?, String, String>? removeUploaderFun;
 
   RepositoryMock(
       {this.downloadFun,
@@ -39,28 +39,28 @@ class RepositoryMock implements PackageRepository {
       this.supportsUploaders = false});
 
   Future<Stream<List<int>>> download(String package, String version) async {
-    if (downloadFun != null) return downloadFun(package, version);
+    if (downloadFun != null) return downloadFun!(package, version);
     throw 'download';
   }
 
   Future<Uri> downloadUrl(String package, String version) async {
-    if (downloadUrlFun != null) return downloadUrlFun(package, version);
+    if (downloadUrlFun != null) return downloadUrlFun!(package, version);
     throw 'downloadUrl';
   }
 
   Future<PackageVersion> finishAsyncUpload(Uri uri) async {
-    if (finishAsyncUploadFun != null) return finishAsyncUploadFun(uri);
+    if (finishAsyncUploadFun != null) return finishAsyncUploadFun!(uri);
     throw 'finishAsyncUpload';
   }
 
-  Future<PackageVersion> lookupVersion(String package, String version) async {
-    if (lookupVersionFun != null) return lookupVersionFun(package, version);
+  Future<PackageVersion?> lookupVersion(String package, String version) async {
+    if (lookupVersionFun != null) return lookupVersionFun!(package, version);
     throw 'lookupVersion';
   }
 
   Future<AsyncUploadInfo> startAsyncUpload(Uri redirectUrl) async {
     if (startAsyncUploadFun != null) {
-      return startAsyncUploadFun(redirectUrl);
+      return startAsyncUploadFun!(redirectUrl);
     }
     throw 'startAsyncUpload';
   }
@@ -74,7 +74,7 @@ class RepositoryMock implements PackageRepository {
   final bool supportsUploaders;
 
   Future<PackageVersion> upload(Stream<List<int>> data) {
-    if (uploadFun != null) return uploadFun(data);
+    if (uploadFun != null) return uploadFun!(data);
     throw 'upload';
   }
 
@@ -83,43 +83,43 @@ class RepositoryMock implements PackageRepository {
       throw 'versions';
     }
 
-    yield* versionsFun(package);
+    yield* versionsFun!(package);
   }
 
-  Future addUploader(String package, String userEmail) {
+  Future? addUploader(String package, String userEmail) {
     if (addUploaderFun != null) {
-      return addUploaderFun(package, userEmail);
+      return addUploaderFun!(package, userEmail);
     }
     throw 'addUploader';
   }
 
-  Future removeUploader(String package, String userEmail) {
+  Future? removeUploader(String package, String userEmail) {
     if (removeUploaderFun != null) {
-      return removeUploaderFun(package, userEmail);
+      return removeUploaderFun!(package, userEmail);
     }
     throw 'removeUploader';
   }
 }
 
 class PackageCacheMock implements PackageCache {
-  final ZoneUnaryCallback<List<int>, String> getFun;
-  final Function setFun;
-  final Function invalidateFun;
+  final ZoneUnaryCallback<List<int>?, String>? getFun;
+  final Function? setFun;
+  final Function? invalidateFun;
 
   PackageCacheMock({this.getFun, this.setFun, this.invalidateFun});
 
-  Future<List<int>> getPackageData(String package) async {
-    if (getFun != null) return getFun(package);
+  Future<List<int>?> getPackageData(String package) async {
+    if (getFun != null) return getFun!(package);
     throw 'no get function';
   }
 
   Future setPackageData(String package, List<int> data) async {
-    if (setFun != null) return setFun(package, data);
+    if (setFun != null) return setFun!(package, data);
     throw 'no set function';
   }
 
   Future invalidatePackageData(String package) async {
-    if (invalidateFun != null) return invalidateFun(package);
+    if (invalidateFun != null) return invalidateFun!(package);
     throw 'no invalidate function';
   }
 }
@@ -362,7 +362,7 @@ void main() {
                 expect('$uri', equals('$finishUrl'));
                 return PackageVersion('foobar', '0.1.0', '');
               });
-          PackageCacheMock cacheMock;
+          PackageCacheMock? cacheMock;
           if (useMemcache) {
             cacheMock =
                 PackageCacheMock(invalidateFun: expectAsync1((String package) {
@@ -418,7 +418,7 @@ void main() {
                   return PackageVersion('foobar', '0.1.0', '');
                 });
               });
-          PackageCacheMock cacheMock;
+          PackageCacheMock? cacheMock;
           if (useMemcache) {
             cacheMock =
                 PackageCacheMock(invalidateFun: expectAsync1((String package) {

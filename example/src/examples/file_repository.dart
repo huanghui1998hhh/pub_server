@@ -5,11 +5,13 @@
 import 'dart:async';
 import 'dart:convert' as convert;
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:pub_server/repository.dart';
+import 'package:stream_transform/stream_transform.dart';
 import 'package:yaml/yaml.dart';
 
 final Logger _logger = Logger('pub_server.file_repository');
@@ -36,7 +38,7 @@ class FileRepository extends PackageRepository {
           return PackageVersion(package, version, pubspec);
         }
         return null;
-      }).where((e) => e != null);
+      }).whereType<PackageVersion>();
     }
 
     return Stream.fromIterable([]);
@@ -45,7 +47,7 @@ class FileRepository extends PackageRepository {
   // TODO: Could be optimized by searching for the exact package/version
   // combination instead of enumerating all.
   @override
-  Future<PackageVersion> lookupVersion(String package, String version) {
+  Future<PackageVersion?> lookupVersion(String package, String version) {
     return versions(package)
         .where((pv) => pv.versionString == version)
         .toList()
@@ -66,7 +68,7 @@ class FileRepository extends PackageRepository {
     var tarballBytes = bb.takeBytes();
     var tarBytes = GZipDecoder().decodeBytes(tarballBytes);
     var archive = TarDecoder().decodeBytes(tarBytes);
-    ArchiveFile pubspecArchiveFile;
+    ArchiveFile? pubspecArchiveFile;
     for (var file in archive.files) {
       if (file.name == 'pubspec.yaml') {
         pubspecArchiveFile = file;
